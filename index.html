@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo de Risco Familiar</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h1>Cálculo do Risco Familiar</h1>
+    <form id="riskForm">
+        <div>
+            <label for="nomeAcs">NOME DO ACS:</label>
+            <input type="text" id="nomeAcs">
+        </div>
+        <div>
+            <label for="equipe">EQUIPE:</label>
+            <input type="text" id="equipe">
+        </div>
+        <div>
+            <label for="data">DATA (Mês e Ano):</label>
+            <input type="month" id="data">
+        </div>
+        <br>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome do Morador</th>
+                    <th>CNS/CPF</th>
+                    <th>Acamado</th>
+                    <th>Deficiência Física</th>
+                    <th>Deficiência Mental</th>
+                    <th>Baixas Condições de Saneamento</th>
+                    <th>Desnutrição Grave</th>
+                    <th>Drogadição</th>
+                    <th>Desemprego</th>
+                    <th>Analfabetismo</th>
+                    <th>Menor de 6 meses</th>
+                    <th>Maior de 70 anos</th>
+                    <th>Hipertensão Arterial Sistêmica</th>
+                    <th>Diabetes Mellitus</th>
+                    <th>Relação Morador/Cômodo</th>
+                    <th>Escore Total</th>
+                    <th>Classificação do Risco Familiar</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- As linhas serão adicionadas dinamicamente -->
+            </tbody>
+        </table>
+        <button type="button" onclick="adicionarLinhas()">Adicionar 12 Linhas</button>
+        <button type="button" onclick="salvarPlanilha()">Salvar em Planilha</button>
+    </form>
+    <script>
+        const tableBody = document.getElementById('tableBody');
+
+        function adicionarLinhas() {
+            for (let i = 0; i < 12; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><input type="text" class="nome-morador"></td>
+                    <td><input type="text" class="cnsCpf"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="3" onchange="calcularLinha(this)"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="3" onchange="calcularLinha(this)"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="3" onchange="calcularLinha(this)"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="3" onchange="calcularLinha(this)"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="3" onchange="calcularLinha(this)"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="2" onchange="calcularLinha(this)"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="2" onchange="calcularLinha(this)"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="1" onchange="calcularLinha(this)"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="1" onchange="calcularLinha(this)"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="1" onchange="calcularLinha(this)"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="1" onchange="calcularLinha(this)"></td>
+                    <td><input type="checkbox" class="risk-factor" data-value="1" onchange="calcularLinha(this)"></td>
+                    <td>
+                        <select class="relationFactor" onchange="calcularLinha(this)">
+                            <option value="3">Maior que 1 (3 pontos)</option>
+                            <option value="2">Igual a 1 (2 pontos)</option>
+                            <option value="0">Menor que 1 (0 ponto)</option>
+                        </select>
+                    </td>
+                    <td class="escoreTotal">0</td>
+                    <td class="classificacaoRisco"></td>
+                `;
+                tableBody.appendChild(tr);
+            }
+        }
+
+        function calcularLinha(element) {
+            const row = element.closest('tr'); // Encontra a linha correspondente
+            const riskFactors = row.querySelectorAll('.risk-factor');
+            const relationFactor = parseInt(row.querySelector('.relationFactor').value || 0);
+
+            // Calcula o escore total
+            let totalScore = Array.from(riskFactors).reduce((sum, factor) => {
+                return sum + (factor.checked ? parseInt(factor.dataset.value) : 0);
+            }, relationFactor);
+
+            // Define a classificação com base no escore total
+            let classificacao = '';
+            if (totalScore <= 6) {
+                classificacao = 'R1 - Risco Menor';
+            } else if (totalScore <= 8) {
+                classificacao = 'R2 - Risco Médio';
+            } else {
+                classificacao = 'R3 - Risco Máximo';
+            }
+
+            // Atualiza os campos da linha
+            row.querySelector('.escoreTotal').textContent = totalScore;
+            row.querySelector('.classificacaoRisco').textContent = classificacao;
+        }
+
+        function salvarPlanilha() {
+            const nomeAcs = document.getElementById('nomeAcs').value;
+            const equipe = document.getElementById('equipe').value;
+            const data = document.getElementById('data').value;
+            const rows = tableBody.querySelectorAll('tr');
+
+            const headers = [
+                "NOME DO ACS", "EQUIPE", "DATA (Mês e Ano)", "Nome do Morador", "CNS/CPF", "Acamado",
+                "Deficiência Física", "Deficiência Mental", "Baixas Condições de Saneamento", "Desnutrição Grave",
+                "Drogadição", "Desemprego", "Analfabetismo", "Menor de 6 meses", "Maior de 70 anos",
+                "Hipertensão Arterial Sistêmica", "Diabetes Mellitus", "Relação Morador/Cômodo", "Escore Total",
+                "Classificação do Risco Familiar"
+            ];
+
+            const dataArray = [];
+            rows.forEach((row) => {
+                const nomeMorador = row.querySelector('.nome-morador').value || '';
+                const cnsCpf = row.querySelector('.cnsCpf').value || '';
+                const relationFactor = row.querySelector('.relationFactor').value || '';
+                const riskFactors = row.querySelectorAll('.risk-factor');
+                const indicators = Array.from(riskFactors).map((factor) =>
+                    factor.checked ? "Sim" : "Não"
+                );
+                const escoreTotal = row.querySelector('.escoreTotal').textContent || 0;
+                const classificacaoRisco = row.querySelector('.classificacaoRisco').textContent || '';
+
+                dataArray.push([
+                    nomeAcs,
+                    equipe,
+                    data,
+                    nomeMorador,
+                    cnsCpf,
+                    ...indicators,
+                    relationFactor,
+                    escoreTotal,
+                    classificacaoRisco,
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...dataArray]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Risco Familiar");
+
+            XLSX.writeFile(wb, "Risco_Familiar.xlsx");
+        }
+    </script>
+</body>
+</html>
